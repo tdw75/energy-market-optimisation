@@ -1,0 +1,6 @@
+pandas
+tqdm
+requests
+sktime
+numpy
+scikit-learn
