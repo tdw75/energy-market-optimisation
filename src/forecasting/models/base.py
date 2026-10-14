@@ -3,8 +3,6 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from sktime.forecasting.naive import NaiveForecaster as NaiveForecasterSK
-
 # todo: add better way to store and pass params than dictionary, e.g. dataclass or pydantic model
 
 
@@ -19,15 +17,16 @@ class ForecastVariables:
 
 
 class ForecastingModel(ABC):
-    def __init__(self, name: str, variables: ForecastVariables, params: dict = {}):
+    def __init__(self, name: str, variables: ForecastVariables, params: dict = None):
         self.name = name
         self.variables = variables
-        self.params = params
+        self.params = params or {}
 
     @abstractmethod
     def fit(self, data: pd.DataFrame):
         raise NotImplementedError("Train method not implemented.")
 
+    @abstractmethod
     def predict(self, data: pd.DataFrame):
         raise NotImplementedError("Predict method not implemented.")
 
@@ -36,17 +35,3 @@ class ForecastingModel(ABC):
             test = train
         self.fit(train)
         return self.predict(test)
-
-
-class NaiveForecaster(ForecastingModel):
-    def __init__(self, name: str, variables: ForecastVariables, params: dict = {}):
-        super().__init__(name, variables, params=params)
-        self.lag = self.params.get("lag", 1)
-        self.estimator = NaiveForecasterSK(strategy="last", sp=self.lag)
-
-    def fit(self, data: pd.DataFrame):
-        self.estimator.fit(data[self.variables.y])
-
-    def predict(self, data: pd.DataFrame):
-        horizon = len(data)
-        return self.estimator.predict(fh=range(1, horizon + 1))
