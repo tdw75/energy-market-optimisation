@@ -61,7 +61,9 @@ def get_data_from_smard(
 
     df = pd.concat(df_list, ignore_index=True)
 
-    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
+    df["timestamp"] = pd.to_datetime(
+        df["timestamp"], unit="ms", utc="Europe/Berlin"
+    )  # todo: handle DST
     df = df.loc[df["timestamp"] >= start_date]
 
     if is_save:
