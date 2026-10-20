@@ -1,50 +1,28 @@
 import pandas as pd
-from sktime.split import ExpandingWindowSplitter
 
-from src.data.raw import read_raw_data, slice_dataframe
-from src.evaluation.backtesting import run_backtest
-from src.forecasting.models.base import NaiveForecaster, ForecastVariables
-
-
-def get_split_params_from_resolution(resolution: str, initial_window: int) -> dict:
-    # todo: make initial_window dynamic??
-
-    if resolution == "hour":
-        return {"fh": range(1, 37), "initial_window": initial_window, "step_length": 24}
-    elif resolution == "quarterhour":
-        return {
-            "fh": range(1, 145),
-            "initial_window": initial_window,
-            "step_length": 96,
-        }
-    else:
-        raise ValueError(f"Unsupported resolution: {resolution}")
-
+from src.data.raw import read_raw_data
+from src.evaluation.backtesting import run_backtest, BacktestingConfig
+from src.forecasting.models.base import ForecastVariables
+from src.forecasting.models.rule_based import NaiveForecaster
+from src.optimisation.battery_arbitrage.config import Config
+from src.optimisation.battery_arbitrage.lp import BatteryArbitrageLP
 
 if __name__ == "__main__":
 
-    fit_start = "2022-01-01"
-    predict_start = "2026-01-01"
-    end = "2026-07-01"
     res = "hour"
+    horizon_days = 1
+    config = BacktestingConfig("2022-01-01", "2026-01-01", "2026-07-01", res)
 
-    all_data = read_raw_data(["day_ahead_price"], res)
-    data = slice_dataframe(all_data["day_ahead_price"], fit_start, end)
-    initial_train = len(slice_dataframe(data, fit_start, predict_start))
+    raw_data = read_raw_data(["day_ahead_price"], res)
 
-    splitter = ExpandingWindowSplitter(
-        **get_split_params_from_resolution(res, initial_train + 12)
+    forecaster = NaiveForecaster(
+        # "daily_naive", ForecastVariables(y="price"), params={"sp": 24}),
+        "weekly_naive",
+        ForecastVariables(y="price"),
+        # todo: make this dynamic based on resolution and frequency of data
+        params={"sp": 168},
     )
-    backtest_results = run_backtest(
-        data,
-        NaiveForecaster(
-            # "daily_naive", ForecastVariables(y="price"), params={"sp": 24}),
-            "weekly_naive",
-            ForecastVariables(y="price"),
-            params={
-                "sp": 168
-            },  # todo: make this dynamic based on resolution and frequency of data
-        ),
-        splitter,
-    )
+    optimiser = BatteryArbitrageLP(Config(battery_capacity=10.0, max_power=1.0))
+
+    backtest_results = run_backtest(raw_data, forecaster, optimiser, config)
     print(pd.DataFrame(backtest_results).mean(axis=1))

@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 
+import pandas as pd
+
 
 @dataclass
 class Request:
-    timesteps: list[int]
+    timesteps: list[pd.Timestamp]
     current_state: float
-    prices: dict[int, float]
+    prices: dict[pd.Timestamp, float]
     battery_capacity: float
     max_power: float
 

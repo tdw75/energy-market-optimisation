@@ -66,7 +66,7 @@ def get_data_from_smard(
 
     if is_save:
         root = Path(__file__).resolve().parent.parent
-        data_dir = root / "data" / "raw" / resolution
+        data_dir = root / "resources" / "raw" / resolution
         data_dir.mkdir(parents=True, exist_ok=True)
         df.to_csv(data_dir / f"{dataset.name}.csv", index=False)
 
@@ -75,7 +75,7 @@ def get_data_from_smard(
 
 def read_raw_data(names: list[str], resolution: str) -> dict[str, pd.DataFrame]:
     root = Path(__file__).resolve().parent.parent.parent
-    data_dir = root / "data" / "raw" / resolution
+    data_dir = root / "resources" / "raw" / resolution
     data_dict = {}
     for name in names:
         data_dict[name] = pd.read_csv(
