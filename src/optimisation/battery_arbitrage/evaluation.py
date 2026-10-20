@@ -16,10 +16,9 @@ def evaluate_pnl(schedule: pd.DataFrame, actual: pd.Series, forecasts: pd.Series
 
     pnl = pd.DataFrame(
         index=schedule.index,
-        columns=["pnl_forecast", "pnl_actual"],
+        columns=["pnl_forecast", "pnl_realised"],
     )
-    pnl["pnl_actual"] = schedule["sell"] * actual["price"] - schedule["buy"] * actual["price"]
+    pnl["pnl_realised"] = schedule["sell"] * actual["price"] - schedule["buy"] * actual["price"]
     pnl["pnl_forecast"] = schedule["sell"] * forecasts - schedule["buy"] * forecasts
-    pnl["pnl_gap"] = pnl["pnl_forecast"] - pnl["pnl_actual"]
 
     return pnl

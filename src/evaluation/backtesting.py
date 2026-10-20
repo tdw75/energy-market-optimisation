@@ -38,6 +38,7 @@ def run_backtest(
         request = construct_request(forecast_opt, current_state, config)
         schedule = optimise(request)
         current_state = schedule["state"].iloc[-1]
+        # todo: add perfect foresight evaluation for comparison
         pnl = evaluate_pnl(schedule, test_opt, forecast_opt)
         metrics[date].update(pnl.sum().to_dict())
 

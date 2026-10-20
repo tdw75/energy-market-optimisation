@@ -1,10 +1,7 @@
-import pandas as pd
 from ortools.linear_solver.pywraplp import Solver
 
 from src.optimisation.battery_arbitrage.config import Request
 from src.optimisation.battery_arbitrage.variables import Variables
-
-HOUR = pd.Timedelta(hours=1)
 
 
 def define_constraints(
@@ -27,10 +24,13 @@ def def_constr_state_of_charge(solver: Solver, variables: Variables, request: Re
     for idx, t in enumerate(request.timesteps):
 
         if idx == 0:
-            constr = solver.Constraint(request.current_state, request.current_state, f"state_of_charge-{t}")
+            constr = solver.Constraint(
+                request.current_state, request.current_state, f"state_of_charge-{t}"
+            )
         else:
+            t_prev = request.timesteps[idx - 1]
             constr = solver.Constraint(0, 0, f"state_of_charge-{t}")
-            constr.SetCoefficient(variables.state[t - HOUR], -1)
+            constr.SetCoefficient(variables.state[t_prev], -1)
         constr.SetCoefficient(variables.state[t], 1)
         constr.SetCoefficient(variables.charge[t], -1)
         constr.SetCoefficient(variables.discharge[t], 1)

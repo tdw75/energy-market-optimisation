@@ -41,3 +41,4 @@ Add later
 - charging and discharging efficiency
 - battery degradation
 - $\Delta_t$ to generalise time steps from hourly
+- add some terminal storage condition (maybe valued by the present value of the energy and adding to obj. fn.)
