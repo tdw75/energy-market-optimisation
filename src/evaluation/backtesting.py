@@ -1,20 +1,33 @@
+from dataclasses import dataclass
+
 import pandas as pd
-from sktime.split.base import BaseWindowSplitter
+from sktime.split import ExpandingWindowSplitter
 from tqdm import tqdm
 
-from src.evaluation.accuracy import evaluate_forecast_accuracy
+from src.data.raw import slice_dataframe
 from src.forecasting.models.base import ForecastingModel
-from src.optimisation.battery_arbitrage.config import Config
-from src.optimisation.battery_arbitrage.evaluation import evaluate_pnl
-from src.optimisation.battery_arbitrage.lp import optimise, construct_request
+from src.optimisation.base import BaseORToolsLP
+from src.optimisation.mpc import run_mpc
+
+
+@dataclass
+class BacktestingConfig:
+    fit_start: str
+    predict_start: str
+    end: str
+    resolution: str
 
 
 def run_backtest(
-    data: pd.DataFrame, forecaster: ForecastingModel, splitter: BaseWindowSplitter
+    raw_data: pd.DataFrame,
+    forecaster: ForecastingModel,
+    optimiser: BaseORToolsLP,
+    config: BacktestingConfig,
 ) -> dict:
     metrics = {}
     current_state = 0.0
-    config = Config(battery_capacity=10.0, max_power=1.0)
+
+    data, splitter = init_splitter(raw_data, config)
 
     for split in tqdm(
         splitter.split(data), desc=f"Backtesting {forecaster.name}", leave=True
@@ -24,22 +37,47 @@ def run_backtest(
         test = data.iloc[split[1]]
         date = test.index[-1].date()
 
-        # todo: need to make more general for different forecasters,
-        #  e.g. some may require exogenous variables, some may not
-        # FORECAST
-        forecast = forecaster.fit_predict(train, test)  # forecast from 12pm
-        metrics[date] = evaluate_forecast_accuracy(forecast, test)
-
-        # todo: need to make more general for different strategies/applications
-        # OPTIMISE
-        # truncate forecast to only include the next day (from 00:00 to 23:59)
-        forecast_opt = forecast[forecast.index.date == date]
-        test_opt = test[test.index.date == date]
-        request = construct_request(forecast_opt, current_state, config)
-        schedule = optimise(request)
-        current_state = schedule["state"].iloc[-1]
-        # todo: add perfect foresight evaluation for comparison
-        pnl = evaluate_pnl(schedule, test_opt, forecast_opt)
-        metrics[date].update(pnl.sum().to_dict())
+        metrics[date], current_state = run_mpc(
+            forecaster, optimiser, train, test, current_state, date
+        )
 
     return pd.DataFrame.from_dict(metrics, orient="index")
+
+
+def init_splitter(
+    all_data, config: BacktestingConfig
+) -> tuple[pd.DataFrame, ExpandingWindowSplitter]:
+    sliced_data = slice_dataframe(
+        all_data["day_ahead_price"], config.fit_start, config.end
+    )
+    initial_train = len(
+        slice_dataframe(sliced_data, config.fit_start, config.predict_start)
+    )
+
+    return sliced_data, ExpandingWindowSplitter(
+        **get_split_params_from_resolution(config.resolution, initial_train + 12)
+    )
+
+
+def get_split_params_from_resolution(resolution: str, initial_window: int) -> dict:
+    # todo: make initial_window dynamic??
+
+    horizon_in_days = 1
+
+    if resolution == "hour":
+        horizon_hrs = 24 * horizon_in_days
+
+        return {
+            "fh": range(1, horizon_hrs + 12 + 1),
+            "initial_window": initial_window,
+            "step_length": horizon_hrs,
+        }
+    elif resolution == "quarterhour":
+        horizon_qrt_hrs = 4 * 24 * horizon_in_days
+        return {
+            "fh": range(1, horizon_qrt_hrs + 12 * 4 + 1),
+            "initial_window": initial_window,
+            "step_length": horizon_qrt_hrs,
+        }
+    else:
+        raise ValueError(f"Unsupported resolution: {resolution}")
