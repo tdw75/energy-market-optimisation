@@ -7,11 +7,12 @@ import pandas as pd
 
 
 class BaseORToolsLP(ABC):
-    def __init__(self, config):
+    def __init__(self, config, current_state: Any):
         self.config = config
+        self.current_state = current_state
 
     @abstractmethod
-    def solve(self, forecast: pd.Series, current_state) -> Any:
+    def solve(self, forecast: pd.Series) -> Any:
         raise NotImplementedError
 
     @abstractmethod
@@ -31,11 +32,11 @@ class BaseORToolsLP(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def construct_request(self, forecast: pd.DataFrame, current_state) -> "Request":
+    def construct_request(self, forecast: pd.DataFrame) -> "Request":
         raise NotImplementedError
 
     @abstractmethod
-    def update_state(self, schedule: pd.DataFrame, current_state) -> Any:
+    def update_state(self, schedule: pd.DataFrame) -> Any:
         """
         Updates the current state of the system based on the schedule.
         This method should be implemented in subclasses to define how the state is updated.

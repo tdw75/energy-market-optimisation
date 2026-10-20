@@ -13,24 +13,22 @@ from src.optimisation.battery_arbitrage.variables import Variables, init_variabl
 
 
 class BatteryArbitrageLP(BaseORToolsLP):
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, current_state: float):
+        super().__init__(config, current_state)
 
-        super().__init__(config)
-
-    def solve(self, forecast: pd.Series, current_state) -> pd.DataFrame:
+    def solve(self, forecast: pd.Series) -> pd.DataFrame:
 
         solver = pywraplp.Solver.CreateSolver("GLOP")
-        request = self.construct_request(forecast, current_state)
+        request = self.construct_request(forecast)
 
         solver, variables = self.init_variables(solver, request)
         solver = self.define_objective_function(solver, variables, request)
         solver = self.define_constraints(solver, variables, request)
 
         status = solver.Solve()
-        if status == pywraplp.Solver.OPTIMAL:
-            print(f"Objective value = {solver.Objective().Value():0.4f}")
-        else:
+        if status != pywraplp.Solver.OPTIMAL:
             raise ValueError("The problem does not have an optimal solution.")
+
 
         schedule = self.get_schedule_from_solution(variables, request)
         return schedule
@@ -74,16 +72,16 @@ class BatteryArbitrageLP(BaseORToolsLP):
         schedule["state"] = [variables.state[t].solution_value() for t in ts]
         return schedule
 
-    def construct_request(self, forecast: pd.Series, current_state: float) -> Request:
+    def construct_request(self, forecast: pd.Series) -> Request:
         request = {
             "timesteps": list(forecast.index),
             "prices": forecast.to_dict(),  # todo: make sure this is the right format for prices
             "battery_capacity": self.config.battery_capacity,
             "max_power": self.config.max_power,
-            "current_state": current_state,
+            "current_state": self.current_state,
         }
 
         return Request(**request)
 
-    def update_state(self, schedule: pd.DataFrame, current_state=None) -> pd.DataFrame:
+    def update_state(self, schedule: pd.DataFrame) -> pd.DataFrame:
         return schedule["state"].iloc[-1]

@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     res = "hour"
     horizon_days = 1
-    config = BacktestingConfig("2022-01-01", "2026-01-01", "2026-07-01", res)
+    config = BacktestingConfig("2022-01-01", "2025-12-31", "2026-07-01", res)
 
     raw_data = read_raw_data(["day_ahead_price"], res)
 
@@ -22,7 +22,13 @@ if __name__ == "__main__":
         # todo: make this dynamic based on resolution and frequency of data
         params={"sp": 168},
     )
-    optimiser = BatteryArbitrageLP(Config(battery_capacity=10.0, max_power=1.0))
+    optimiser = BatteryArbitrageLP
 
-    backtest_results = run_backtest(raw_data, forecaster, optimiser, config)
+    backtest_results = run_backtest(
+        raw_data,
+        forecaster,
+        optimiser,
+        Config(battery_capacity=10.0, max_power=1.0),
+        config,
+    )
     print(pd.DataFrame(backtest_results))

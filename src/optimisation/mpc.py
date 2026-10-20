@@ -20,16 +20,17 @@ def run_mpc(
     optimiser: BaseORToolsLP,
     train: pd.DataFrame,
     test: pd.DataFrame,
-    current_state,
     date: pd.Timestamp,
 ) -> tuple[dict, Any]:
     forecast = forecaster.fit_predict(train, test)
     forecast_metrics = evaluate_forecast_accuracy(forecast, test)
 
-    schedule = optimiser.solve(forecast[forecast.index.date == date], current_state)
-    state = optimiser.update_state(schedule, current_state)
+    # todo: optimise on whole horizon, minus today's forecasts
+    schedule = optimiser.solve(forecast[forecast.index.date == date])
+    state = optimiser.update_state(schedule)
     pnl_metrics = evaluate_pnl(
         schedule, test[test.index.date == date], forecast[forecast.index.date == date]
     )
+    # todo: evaluate only on actioned date (tomorrow's schedule)
     metrics = {**forecast_metrics, **pnl_metrics.sum().to_dict()}
     return metrics, state
