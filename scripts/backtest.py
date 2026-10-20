@@ -25,4 +25,4 @@ if __name__ == "__main__":
     optimiser = BatteryArbitrageLP(Config(battery_capacity=10.0, max_power=1.0))
 
     backtest_results = run_backtest(raw_data, forecaster, optimiser, config)
-    print(pd.DataFrame(backtest_results).mean(axis=1))
+    print(pd.DataFrame(backtest_results))

@@ -31,5 +31,5 @@ def run_mpc(
     pnl_metrics = evaluate_pnl(
         schedule, test[test.index.date == date], forecast[forecast.index.date == date]
     )
-    metrics = {**forecast_metrics, **pnl_metrics}
+    metrics = {**forecast_metrics, **pnl_metrics.sum().to_dict()}
     return metrics, state
