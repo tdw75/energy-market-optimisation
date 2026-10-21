@@ -5,10 +5,9 @@ from sktime.split import ExpandingWindowSplitter
 from tqdm import tqdm
 
 from src.data.raw import slice_dataframe
-from src.forecasting.models.base import ForecastingModel
-from src.optimisation.base import BaseORToolsLP
-from src.optimisation.battery_arbitrage.config import Config
+from src.forecasting.registry import get_forecaster_by_name
 from src.optimisation.mpc import run_mpc
+from src.optimisation.registry import get_optimiser_by_name
 
 
 @dataclass
@@ -23,28 +22,28 @@ class BacktestingConfig:
 
 def run_backtest(
     raw_data: pd.DataFrame,
-    forecaster: ForecastingModel,
-    optimiser_cls: type[BaseORToolsLP],
-    opt_config: Config,  # todo: rename
+    forecaster_name: str,
+    optimiser_name: str,
     config: BacktestingConfig,
 ) -> dict:
     metrics = {}
-    state = 0.0
+    state = None
 
     data, splitter = init_splitter(raw_data, config)
 
     for split in tqdm(
-        splitter.split(data), desc=f"Backtesting {forecaster.name}", leave=True
+        splitter.split(data),
+        desc=f"Backtesting {optimiser_name} with forecaster {forecaster_name}",
+        leave=True,
     ):
 
         # todo: add multiple forecasting models for each split
 
         train = data.iloc[split[0]]
         test = data.iloc[split[1]]
-        date = test.index[
-            splitter.step_length
-        ].date()  # todo: test that this is correct
-        optimiser = optimiser_cls(opt_config, state)
+        date = test.index[splitter.step_length].date()
+        forecaster = get_forecaster_by_name(forecaster_name)
+        optimiser = get_optimiser_by_name(optimiser_name, current_state=state)
         metrics[date], state = run_mpc(forecaster, optimiser, train, test, date)
 
         # todo: summarise metrics by forecasting model
@@ -54,11 +53,9 @@ def run_backtest(
 
 
 def init_splitter(
-    all_data, config: BacktestingConfig
+    all_data: pd.DataFrame, config: BacktestingConfig
 ) -> tuple[pd.DataFrame, ExpandingWindowSplitter]:
-    sliced_data = slice_dataframe(
-        all_data["day_ahead_price"], config.fit_start, config.end
-    )
+    sliced_data = slice_dataframe(all_data, config.fit_start, config.end)
     params = get_split_params_from_config(sliced_data, config)
 
     return sliced_data, ExpandingWindowSplitter(**params)
@@ -77,8 +74,6 @@ def get_split_params_from_config(data: pd.DataFrame, config: BacktestingConfig) 
         n_steps_per_hour = 4
     else:
         raise ValueError(f"Unsupported resolution: {config.resolution}")
-
-    # todo: make initial_window dynamic??
 
     initial_train = slice_dataframe(data, config.fit_start, config.opt_start)
     half_day = 12 * n_steps_per_hour
