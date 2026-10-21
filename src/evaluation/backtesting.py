@@ -17,15 +17,15 @@ class BacktestingConfig:
     opt_start: str
     end: str
     resolution: str
-    step_length: int = 1  # in days
-    forecast_horizon: int = 7  # in days
+    step_length_days: int = 1  # for MPC
+    forecast_horizon_days: int = 7  # for MPC
 
 
 def run_backtest(
     raw_data: pd.DataFrame,
     forecaster: ForecastingModel,
     optimiser_cls: type[BaseORToolsLP],
-    opt_config: Config, # todo: rename
+    opt_config: Config,  # todo: rename
     config: BacktestingConfig,
 ) -> dict:
     metrics = {}
@@ -37,13 +37,18 @@ def run_backtest(
         splitter.split(data), desc=f"Backtesting {forecaster.name}", leave=True
     ):
 
+        # todo: add multiple forecasting models for each split
+
         train = data.iloc[split[0]]
         test = data.iloc[split[1]]
-        date = test.index[splitter.step_length].date() # todo: test that this is correct
+        date = test.index[
+            splitter.step_length
+        ].date()  # todo: test that this is correct
         optimiser = optimiser_cls(opt_config, state)
-        metrics[date], state = run_mpc(
-            forecaster, optimiser, train, test, date
-        )
+        metrics[date], state = run_mpc(forecaster, optimiser, train, test, date)
+
+        # todo: summarise metrics by forecasting model
+        # todo: add option to save metrics to csv
 
     return pd.DataFrame.from_dict(metrics, orient="index")
 
@@ -60,6 +65,11 @@ def init_splitter(
 
 
 def get_split_params_from_config(data: pd.DataFrame, config: BacktestingConfig) -> dict:
+    """
+    Generates the parameters for the ExpandingWindowSplitter based on the BacktestingConfig.
+    These parameters determine the behaviour of the model predictive control (MPC) backtesting process,
+    including the forecast horizon, initial training window, and step length.
+    """
 
     if config.resolution == "hour":
         n_steps_per_hour = 1
@@ -74,7 +84,9 @@ def get_split_params_from_config(data: pd.DataFrame, config: BacktestingConfig) 
     half_day = 12 * n_steps_per_hour
     initial_window = len(initial_train) + half_day
     return {
-        "fh": range(1, config.forecast_horizon * 24 * n_steps_per_hour + half_day + 1),
+        "fh": range(
+            1, config.forecast_horizon_days * 24 * n_steps_per_hour + half_day + 1
+        ),
         "initial_window": initial_window,
-        "step_length": config.step_length * 24,
+        "step_length": config.step_length_days * 24 * n_steps_per_hour,
     }
