@@ -22,34 +22,39 @@ class BacktestingConfig:
 
 def run_backtest(
     raw_data: pd.DataFrame,
-    forecaster_name: str,
+    forecaster_names: list[str],
     optimiser_name: str,
     config: BacktestingConfig,
-) -> dict:
-    metrics = {}
-    state = None
+) -> pd.DataFrame:
+    records = []
+    states = {n: None for n in forecaster_names}
 
     data, splitter = init_splitter(raw_data, config)
 
     for split in tqdm(
         splitter.split(data),
-        desc=f"Backtesting {optimiser_name} with forecaster {forecaster_name}",
+        desc=f"Backtesting {optimiser_name} with forecasters {forecaster_names}",
         leave=True,
     ):
-
-        # todo: add multiple forecasting models for each split
 
         train = data.iloc[split[0]]
         test = data.iloc[split[1]]
         date = test.index[splitter.step_length].date()
-        forecaster = get_forecaster_by_name(forecaster_name)
-        optimiser = get_optimiser_by_name(optimiser_name, current_state=state)
-        metrics[date], state = run_mpc(forecaster, optimiser, train, test, date)
 
-        # todo: summarise metrics by forecasting model
+        for name in forecaster_names:
+
+            forecaster = get_forecaster_by_name(name)
+            optimiser = get_optimiser_by_name(
+                optimiser_name, current_state=states[name]
+            )
+            metric_values, states[name] = run_mpc(
+                forecaster, optimiser, train, test, date
+            )
+            records.append({"date": date, "forecaster": name, **metric_values})
+
         # todo: add option to save metrics to csv
 
-    return pd.DataFrame.from_dict(metrics, orient="index")
+    return pd.DataFrame(records)
 
 
 def init_splitter(
