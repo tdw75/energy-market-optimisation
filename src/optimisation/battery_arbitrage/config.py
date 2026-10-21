@@ -4,7 +4,7 @@ import pandas as pd
 
 
 @dataclass
-class Request:
+class BatteryArbitrageRequest:
     timesteps: list[pd.Timestamp]
     current_state: float
     prices: dict[pd.Timestamp, float]
@@ -13,6 +13,6 @@ class Request:
 
 
 @dataclass
-class Config:
+class BatteryArbitrageConfig:
     battery_capacity: float
     max_power: float
