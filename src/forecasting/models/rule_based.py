@@ -1,7 +1,16 @@
+import warnings
+
 import pandas as pd
 from sktime.forecasting.naive import NaiveForecaster as NaiveForecasterSK
 
 from src.forecasting.models.base import ForecastingModel, ForecastVariables
+
+warnings.filterwarnings(
+    "ignore",
+    message="Converting to PeriodArray/Index representation will drop timezone information.",
+    category=UserWarning,
+    module=r"sktime\.utils\.seasonality",
+)
 
 
 class PerfectForecaster(ForecastingModel):
@@ -19,7 +28,9 @@ class NaiveForecaster(ForecastingModel):
     def __init__(self, name: str, variables: ForecastVariables, params: dict = None):
         super().__init__(name, variables, params=params)
         self.lag = self.params.get("sp", 168)
-        self.estimator = NaiveForecasterSK(strategy="last", sp=self.lag)
+        self.estimator = NaiveForecasterWithoutRememberData(
+            strategy="last", sp=self.lag
+        )
 
     def fit(self, data: pd.DataFrame):
         freq = pd.infer_freq(data.index)
@@ -28,3 +39,8 @@ class NaiveForecaster(ForecastingModel):
     def predict(self, data: pd.DataFrame):
         horizon = len(data)
         return self.estimator.predict(fh=range(1, horizon + 1))
+
+
+class NaiveForecasterWithoutRememberData(NaiveForecasterSK):
+    """Hacky subclass to suppress future warnings about the `remember_data`"""
+    _config = {**NaiveForecasterSK._config, "remember_data": False}
