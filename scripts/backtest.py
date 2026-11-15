@@ -12,8 +12,17 @@ if __name__ == "__main__":
 
     backtest_results = run_backtest(
         raw_data["day_ahead_price"],
-        "naive_weekly",
+        ["naive_weekly", "naive_daily", "perfect"],
         "battery_arbitrage_lp",
         config,
     )
-    print(pd.DataFrame(backtest_results))
+    print(
+        backtest_results.groupby(by="forecaster").agg(
+            {
+                "MAE": "mean",
+                "RMSE": "mean",
+                "pnl_forecast": "sum",
+                "pnl_realised": "sum",
+            }
+        )
+    )
