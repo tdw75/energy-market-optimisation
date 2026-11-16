@@ -3,11 +3,12 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
+from src.control.base import ControlConfig
 from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_config
 
 
 @pytest.mark.parametrize(
-    ("config", "training_rows", "expected"),
+    ("backtest_config", "control_config", "training_rows", "expected"),
     [
         (
             BacktestingConfig(
@@ -16,6 +17,7 @@ from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_
                 end="2023-02-01",
                 resolution="hour",
             ),
+            ControlConfig(step_length_days=1, forecast_horizon_days=7),
             24 * 7,  # 7 days of hourly data
             {
                 "fh": range(1, 24 * 7 + 12 + 1),  # 7 days + half day
@@ -30,6 +32,7 @@ from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_
                 end="2023-02-01",
                 resolution="quarterhour",
             ),
+            ControlConfig(step_length_days=1, forecast_horizon_days=7),
             24 * 7 * 4,  # 7 days of quarter-hourly data
             {
                 "fh": range(1, 24 * 7 * 4 + 12 * 4 + 1),  # 7 days + half day
@@ -43,9 +46,8 @@ from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_
                 opt_start="2023-01-15",
                 end="2023-03-01",
                 resolution="hour",
-                step_length_days=2,
-                forecast_horizon_days=3,
             ),
+            ControlConfig(step_length_days=2, forecast_horizon_days=3),
             14 * 24,  # 14 days of hourly data
             {
                 "fh": range(1, 3 * 24 + 12 + 1),  # 3 days + 12 hours
@@ -55,7 +57,9 @@ from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_
         ),
     ],
 )
-def test_get_split_params_from_config(config, training_rows, expected):
+def test_get_split_params_from_config(
+    backtest_config, control_config, training_rows, expected
+):
     data = pd.DataFrame(index=pd.date_range("2023-01-01", periods=training_rows))
     sliced_training_data = pd.DataFrame(index=range(training_rows))
 
@@ -63,7 +67,9 @@ def test_get_split_params_from_config(config, training_rows, expected):
         "src.evaluation.backtesting.slice_dataframe",
         return_value=sliced_training_data,
     ) as slice_dataframe:
-        params = get_split_params_from_config(data, config)
+        params = get_split_params_from_config(data, backtest_config, control_config)
 
     assert params == expected
-    slice_dataframe.assert_called_once_with(data, config.fit_start, config.opt_start)
+    slice_dataframe.assert_called_once_with(
+        data, backtest_config.fit_start, backtest_config.opt_start
+    )

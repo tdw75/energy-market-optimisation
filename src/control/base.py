@@ -14,7 +14,7 @@ class ControlConfig:
     forecast_horizon_days: int
 
 
-class controller:
+class Controller:
 
     def __init__(self, config: ControlConfig):
         self.config = config
