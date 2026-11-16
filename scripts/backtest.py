@@ -1,5 +1,3 @@
-import pandas as pd
-
 from src.data.raw import read_raw_data
 from src.evaluation.backtesting import run_backtest, BacktestingConfig
 
@@ -14,6 +12,7 @@ if __name__ == "__main__":
         raw_data["day_ahead_price"],
         ["naive_weekly", "naive_daily", "perfect"],
         "battery_arbitrage_lp",
+        "mpc_week_ahead",
         config,
     )
     print(
