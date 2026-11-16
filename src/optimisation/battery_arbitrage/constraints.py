@@ -5,17 +5,6 @@ from src.optimisation.battery_arbitrage.config import BatteryArbitrageRequest
 from src.optimisation.battery_arbitrage.variables import Variables
 
 
-def define_constraints(
-    solver: Solver, variables: Variables, request: BatteryArbitrageRequest
-) -> Solver:
-
-    solver = def_constr_state_of_charge(solver, variables, request)
-    solver = def_constr_max_battery_capacity(solver, variables, request)
-    solver = def_constr_max_charging_power(solver, variables, request)
-
-    return solver
-
-
 def def_constr_state_of_charge(
     solver: Solver, variables: Variables, request: BatteryArbitrageRequest
 ):
@@ -61,7 +50,7 @@ def def_constr_max_battery_capacity(
 
 
 def def_constr_max_charging_power(
-    solver: Solver, variables: Variables, request: BatteryArbitrageRequest
+    solver: Solver, variables: Variables, request: BatteryArbitrageRequest, delta_t: float
 ):
     """
     Defines the constraint that the charging and discharging decisions at each time step cannot exceed the maximum charging power
@@ -69,7 +58,7 @@ def def_constr_max_charging_power(
     for t in request.timesteps:
         constr = solver.Constraint(
             -solver.infinity(),
-            request.max_power,
+            request.max_power * delta_t,
             get_constr_name("max_charging_power", t),
         )
         constr.SetCoefficient(variables.charge[t], 1)

@@ -18,6 +18,7 @@ from src.optimisation.battery_arbitrage.variables import Variables, init_variabl
 class BatteryArbitrageLP(BaseORToolsLP):
     def __init__(self, config: BatteryArbitrageConfig, current_state: float):
         super().__init__(config, current_state)
+        self.delta_t = self.config.resolution.hours
 
     def solve(self, forecast: pd.Series) -> pd.DataFrame:
 
@@ -61,7 +62,7 @@ class BatteryArbitrageLP(BaseORToolsLP):
     ) -> Solver:
         solver = def_constr_state_of_charge(solver, variables, request)
         solver = def_constr_max_battery_capacity(solver, variables, request)
-        solver = def_constr_max_charging_power(solver, variables, request)
+        solver = def_constr_max_charging_power(solver, variables, request, self.delta_t)
         return solver
 
     def get_schedule_from_solution(

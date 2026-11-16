@@ -1,4 +1,5 @@
 from collections import namedtuple
+from enum import Enum
 
 from pathlib import Path
 
@@ -31,7 +32,7 @@ dataset_filters = {
 def get_data_from_smard(
     dataset: DatasetFilter,
     start_date: str,
-    resolution: str,
+    resolution: Resolution,
     is_save: bool = True,
 ) -> pd.DataFrame:
     index_url = f"https://www.smard.de/app/chart_data/{dataset.filter}/DE/index_{resolution}.json"
@@ -75,7 +76,7 @@ def get_data_from_smard(
     return df
 
 
-def read_raw_data(names: list[str], resolution: str) -> dict[str, pd.DataFrame]:
+def read_raw_data(names: list[str], resolution: Resolution) -> dict[str, pd.DataFrame]:
     root = Path(__file__).resolve().parent.parent.parent
     data_dir = root / "resources" / "raw" / resolution
     data_dict = {}
@@ -92,3 +93,31 @@ def slice_dataframe(df: pd.DataFrame, start_date: str, end_date: str) -> pd.Data
     Slices the DataFrame from start_date (inclusive) to end_date (exclusive).
     """
     return df[(df.index >= start_date) & (df.index < end_date)]
+
+
+class Resolution(Enum):
+    HOURLY = "hour"
+    QUARTER_HOURLY = "quarterhour"
+
+    @property
+    def minutes(self) -> int:
+        return {
+            Resolution.HOURLY: 60,
+            Resolution.QUARTER_HOURLY: 15,
+        }[self]
+
+    @property
+    def hours(self) -> float:
+        return self.minutes / 60
+
+    @property
+    def steps_per_hour(self) -> int:
+        return 60 // self.minutes
+
+    @property
+    def steps_per_day(self) -> int:
+        return 24 * self.steps_per_hour
+
+    @property
+    def steps_per_week(self) -> int:
+        return 7 * self.steps_per_day

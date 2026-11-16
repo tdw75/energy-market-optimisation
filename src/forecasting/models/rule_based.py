@@ -27,7 +27,7 @@ class PerfectForecaster(ForecastingModel):
 class NaiveForecaster(ForecastingModel):
     def __init__(self, name: str, variables: ForecastVariables, params: dict = None):
         super().__init__(name, variables, params=params)
-        self.lag = self.params.get("sp", 168)
+        self.lag = self.params["sp"]  # seasonal periodicity
         self.estimator = NaiveForecasterWithoutRememberData(
             strategy="last", sp=self.lag
         )
