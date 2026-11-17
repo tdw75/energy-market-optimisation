@@ -89,7 +89,9 @@ def read_raw_data(names: list[str], resolution: Resolution) -> dict[str, pd.Data
     return data_dict
 
 
-def slice_dataframe(df: pd.DataFrame, start_date: str, end_date: str) -> pd.DataFrame:
+def slice_dataframe(
+    df: pd.DataFrame, start_date: str | pd.Timestamp, end_date: str | pd.Timestamp
+) -> pd.DataFrame:
     """
     Slices the DataFrame from start_date (inclusive) to end_date (exclusive).
     """

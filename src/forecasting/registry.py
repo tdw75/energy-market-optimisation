@@ -16,7 +16,7 @@ def get_forecaster_by_name(
     return MODEL_REGISTRY[name](variables, resolution)
 
 
-def perfect_forecaster(variables: ForecastVariables, **kwargs):
+def perfect_forecaster(variables: ForecastVariables, resolution: Resolution):
     return PerfectForecaster("perfect", variables)
 
 

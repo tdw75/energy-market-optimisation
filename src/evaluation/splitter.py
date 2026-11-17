@@ -116,3 +116,17 @@ def clip_to_local_midnight(
 
     next_midnight = first_midnight + pd.DateOffset(days=1)
     return data.loc[data.index >= next_midnight.tz_convert("UTC")]
+
+
+def offset_split(
+    data: pd.DataFrame,
+    test_idx: np.ndarray,
+    offset: str = "12h",
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Shift the train/test boundary backwards by the specified offset."""
+    boundary = data.index[test_idx[0]] - pd.Timedelta(offset)
+
+    train = data.loc[data.index < boundary]
+    test = data.loc[data.index >= boundary]
+
+    return train, test
