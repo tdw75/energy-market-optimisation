@@ -35,13 +35,15 @@ def run_backtest(
     controller = get_controller_by_name(controller_name)
     splitter = init_splitter(config, controller.config)
 
-    for split in tqdm(
+    for train_idx, test_idx in tqdm(
         splitter.split(data),
         desc=f"Backtesting {optimiser_name} with forecasters {forecaster_names} using controller {controller_name}",
         leave=True,
     ):
-        train, test = offset_split(data, split[1], offset="12h")
-        execution_date = (test.index[0] + pd.Timedelta(days=1)).date()
+        execution_date = data.index[test_idx[0]].tz_convert(config.timezone).normalize()
+        train, test = offset_split(
+            data, train_idx, test_idx, offset="12h"
+        )  # todo: make offset configurable, move to config
 
         for name in forecaster_names:
 
@@ -56,9 +58,7 @@ def run_backtest(
                 optimiser, schedule, execution_date
             )
 
-            metric_values = evaluate_iteration(
-                executed_schedule, forecasts, test, execution_date
-            )
+            metric_values = evaluate_iteration(executed_schedule, forecasts, test)
             records.append(
                 {"date": execution_date, "forecaster": name, **metric_values}
             )
@@ -70,18 +70,13 @@ def run_backtest(
 
 
 def evaluate_iteration(
-    executed_schedule: pd.DataFrame,
-    forecasts: pd.DataFrame,
-    test: pd.DataFrame,
-    date: pd.Timestamp,
-):
-    forecast_metrics = evaluate_forecast_accuracy(forecasts, test)
+    executed_schedule: pd.DataFrame, forecasts: pd.Series, test: pd.DataFrame
+) -> dict[str, float]:
+    forecast_metrics = evaluate_forecast_accuracy(test, forecasts)
     pnl_metrics = evaluate_pnl(
         executed_schedule,
-        # todo: align with executed schedule/control step length
-        test[test.index.date == date],
-        # todo: align with executed schedule/control step length
-        forecasts[forecasts.index.date == date],
+        test.reindex(executed_schedule.index),
+        forecasts.reindex(executed_schedule.index),
     )
     return {**forecast_metrics, **pnl_metrics.sum().to_dict()}
 
