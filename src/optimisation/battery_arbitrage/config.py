@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from src.data.raw import Resolution
+
 
 @dataclass
 class BatteryArbitrageRequest:
@@ -16,3 +18,4 @@ class BatteryArbitrageRequest:
 class BatteryArbitrageConfig:
     battery_capacity: float
     max_power: float
+    resolution: Resolution

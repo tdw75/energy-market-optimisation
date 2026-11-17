@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from src.control.base import ControlConfig
 from src.control.registry import get_controller_by_name
-from src.data.raw import slice_dataframe
+from src.data.raw import slice_dataframe, Resolution
 from src.evaluation.accuracy import evaluate_forecast_accuracy
 from src.forecasting.registry import get_forecaster_by_name
 from src.optimisation.battery_arbitrage.evaluation import evaluate_pnl
@@ -18,7 +18,7 @@ class BacktestingConfig:
     fit_start: str
     opt_start: str
     end: str
-    resolution: str
+    resolution: Resolution
 
 
 def run_backtest(
@@ -39,6 +39,7 @@ def run_backtest(
         desc=f"Backtesting {optimiser_name} with forecasters {forecaster_names} using controller {controller_name}",
         leave=True,
     ):
+        # todo: this proceeds by a fixed number of steps, using calendar days would be more robust to DST changes, but would require a more complex implementation of the ExpandingWindowSplitter
 
         train = data.iloc[split[0]]
         test = data.iloc[split[1]]
@@ -46,9 +47,9 @@ def run_backtest(
 
         for name in forecaster_names:
 
-            forecaster = get_forecaster_by_name(name)
+            forecaster = get_forecaster_by_name(name, config.resolution)
             optimiser = get_optimiser_by_name(
-                optimiser_name, current_state=states[name]
+                optimiser_name, config.resolution, current_state=states[name]
             )
             forecasts, schedule, optimiser = controller.plan(
                 forecaster, optimiser, train, test, date
@@ -87,8 +88,6 @@ def init_splitter(
     control_config: ControlConfig,
 ) -> tuple[pd.DataFrame, ExpandingWindowSplitter]:
 
-    # todo: this is actually part of the control logic, should maybe move to MPC module
-
     sliced_data = slice_dataframe(
         all_data, backtest_config.fit_start, backtest_config.end
     )
@@ -108,23 +107,16 @@ def get_split_params_from_config(
     including the forecast horizon, initial training window, and step length.
     """
 
-    if backtest_config.resolution == "hour":
-        n_steps_per_hour = 1
-    elif backtest_config.resolution == "quarterhour":
-        n_steps_per_hour = 4
-    else:
-        raise ValueError(f"Unsupported resolution: {backtest_config.resolution}")
-
     initial_train = slice_dataframe(
         data, backtest_config.fit_start, backtest_config.opt_start
     )
-    half_day = 12 * n_steps_per_hour
+    half_day = 12 * backtest_config.resolution.steps_per_hour
     initial_window = len(initial_train) + half_day
     return {
         "fh": range(
             1,
-            control_config.forecast_horizon_days * 24 * n_steps_per_hour + half_day + 1,
+            control_config.forecast_horizon_days * backtest_config.resolution.steps_per_day + half_day + 1,
         ),
         "initial_window": initial_window,
-        "step_length": control_config.step_length_days * 24 * n_steps_per_hour,
+        "step_length": control_config.step_length_days * backtest_config.resolution.steps_per_day,
     }

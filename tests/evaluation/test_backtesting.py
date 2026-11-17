@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from src.control.base import ControlConfig
+from src.data.raw import Resolution
 from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_config
 
 
@@ -15,7 +16,7 @@ from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_
                 fit_start="2023-01-01",
                 opt_start="2023-01-08",
                 end="2023-02-01",
-                resolution="hour",
+                resolution=Resolution.HOURLY,
             ),
             ControlConfig(step_length_days=1, forecast_horizon_days=7),
             24 * 7,  # 7 days of hourly data
@@ -30,7 +31,7 @@ from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_
                 fit_start="2023-01-01",
                 opt_start="2023-01-08",
                 end="2023-02-01",
-                resolution="quarterhour",
+                resolution=Resolution.QUARTER_HOURLY,
             ),
             ControlConfig(step_length_days=1, forecast_horizon_days=7),
             24 * 7 * 4,  # 7 days of quarter-hourly data
@@ -45,7 +46,7 @@ from src.evaluation.backtesting import BacktestingConfig, get_split_params_from_
                 fit_start="2023-01-01",
                 opt_start="2023-01-15",
                 end="2023-03-01",
-                resolution="hour",
+                resolution=Resolution.HOURLY,
             ),
             ControlConfig(step_length_days=2, forecast_horizon_days=3),
             14 * 24,  # 14 days of hourly data

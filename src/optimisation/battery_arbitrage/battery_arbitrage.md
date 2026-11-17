@@ -2,10 +2,13 @@
 
 ### Data
 Let
-- $T = \{0, 2, ..., 23\}$ denote time indices at hourly intervals for the following day
-- $p_t \in \mathbb{R}^{\ge 0}$ denote the price of electricity (in MWh) at time $t \in T$
+- $T$ denote time indices for the optimisation horizon
+  - where $\Delta_t$ represents the time step (as a fraction of an hour) between each $t \in T$ (e.g. $\Delta_t = 1$ 
+  - for hourly data and $\Delta_t = 0.25$ for quarter-hourly))
+  - note: represented as a subset of $\mathbb{Z}$ here for simplicity but can be generalised to any time index set
+- $p_t \in \mathbb{R}$ denote the price of electricity (in MWh) at time $t \in T$
 - $B \in \mathbb{R}^{>0}$ denotes the battery capacity (in MWh)
-- $P \in \mathbb{R}^{>0}$ denote the maximum (dis)charging power (in MW)
+- $P^{max} \in \mathbb{R}^{>0}$ denote the maximum (dis)charging power (in MW)
 - $s_0 \in \mathbb{R}^{\ge 0}$ denote the initial state of charge (in MWh)
 
 ### Variables 
@@ -24,21 +27,20 @@ $$\min \sum_{t \in T_d} p_t(d_t-c_t)$$
 
 $$ s_t = s_{t-1} + c_t - d_t\ \  \forall t \in T$$
 
-##### 2: Reach each device's target state of charge at relevant time points
-
-$$c_{d, t} \geq l_{d, t}\ \ \forall d \in D \ \ \forall t \in \tilde{T}_d$$
-
-##### 3: Do not let state of charge exceed battery capacity
+##### 2: Do not let state of charge exceed battery capacity
 
 $$s_t \leq B\ \ \forall t \in T$$
 
-##### 4: Do not exceed battery power with charging decision
+##### 3: Do not exceed battery power with charging decision
 
-$$c_t + d_t \leq P\ \  \forall t \in T$$
+$$c_t + d_t \leq P^{max}\cdot\Delta_t\ \  \forall t \in T$$
+
+##### 4: Enforce terminal state of charge condition
+
+$$s_{|T|} + c_{|T|} + d_{|T|} = s_0$$
 
 
 Add later
 - charging and discharging efficiency
 - battery degradation
-- $\Delta_t$ to generalise time steps from hourly
 - add some terminal storage condition (maybe valued by the present value of the energy and adding to obj. fn.)

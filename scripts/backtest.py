@@ -1,9 +1,9 @@
-from src.data.raw import read_raw_data
+from src.data.raw import read_raw_data, Resolution
 from src.evaluation.backtesting import run_backtest, BacktestingConfig
 
 if __name__ == "__main__":
 
-    res = "hour"
+    res = Resolution.HOURLY
     horizon_days = 1
     config = BacktestingConfig("2022-01-01", "2025-12-31", "2026-07-01", res)
     raw_data = read_raw_data(["day_ahead_price"], res)
