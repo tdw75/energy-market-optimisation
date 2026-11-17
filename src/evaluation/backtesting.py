@@ -120,3 +120,8 @@ def get_split_params_from_config(
         "initial_window": initial_window,
         "step_length": control_config.step_length_days * backtest_config.resolution.steps_per_day,
     }
+
+
+
+
+
