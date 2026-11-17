@@ -54,7 +54,9 @@ def run_backtest(
             forecasts, schedule, optimiser = controller.plan(
                 forecaster, optimiser, train, test, date
             )
-            executed_schedule, states[name] = controller.execute(optimiser, schedule, date)
+            executed_schedule, states[name] = controller.execute(
+                optimiser, schedule, date
+            )
 
             metric_values = evaluate_iteration(executed_schedule, forecasts, test, date)
             records.append({"date": date, "forecaster": name, **metric_values})
@@ -115,8 +117,12 @@ def get_split_params_from_config(
     return {
         "fh": range(
             1,
-            control_config.forecast_horizon_days * backtest_config.resolution.steps_per_day + half_day + 1,
+            control_config.forecast_horizon_days
+            * backtest_config.resolution.steps_per_day
+            + half_day
+            + 1,
         ),
         "initial_window": initial_window,
-        "step_length": control_config.step_length_days * backtest_config.resolution.steps_per_day,
+        "step_length": control_config.step_length_days
+        * backtest_config.resolution.steps_per_day,
     }
