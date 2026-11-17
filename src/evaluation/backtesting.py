@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
 import pandas as pd
-from sktime.split import ExpandingWindowSplitter
 from tqdm import tqdm
 
 from src.control.base import ControlConfig
 from src.control.registry import get_controller_by_name
 from src.data.raw import slice_dataframe, Resolution
 from src.evaluation.accuracy import evaluate_forecast_accuracy
+from src.evaluation.splitter import DateBasedExpandingWindowSplitter, offset_split
 from src.forecasting.registry import get_forecaster_by_name
 from src.optimisation.battery_arbitrage.evaluation import evaluate_pnl
 from src.optimisation.registry import get_optimiser_by_name
@@ -19,10 +19,11 @@ class BacktestingConfig:
     opt_start: str
     end: str
     resolution: Resolution
+    timezone: str = "Europe/Berlin"
 
 
 def run_backtest(
-    raw_data: pd.DataFrame,
+    data: pd.DataFrame,
     forecaster_names: list[str],
     optimiser_name: str,
     controller_name: str,
@@ -32,18 +33,15 @@ def run_backtest(
     states = {n: None for n in forecaster_names}
 
     controller = get_controller_by_name(controller_name)
-    data, splitter = init_splitter(raw_data, config, controller.config)
+    splitter = init_splitter(config, controller.config)
 
     for split in tqdm(
         splitter.split(data),
         desc=f"Backtesting {optimiser_name} with forecasters {forecaster_names} using controller {controller_name}",
         leave=True,
     ):
-        # todo: this proceeds by a fixed number of steps, using calendar days would be more robust to DST changes, but would require a more complex implementation of the ExpandingWindowSplitter
-
-        train = data.iloc[split[0]]
-        test = data.iloc[split[1]]
-        date = test.index[splitter.step_length + 1].date()
+        train, test = offset_split(data, split[1], offset="12h")
+        execution_date = (test.index[0] + pd.Timedelta(days=1)).date()
 
         for name in forecaster_names:
 
@@ -52,14 +50,18 @@ def run_backtest(
                 optimiser_name, config.resolution, current_state=states[name]
             )
             forecasts, schedule, optimiser = controller.plan(
-                forecaster, optimiser, train, test, date
+                forecaster, optimiser, train, test, execution_date
             )
             executed_schedule, states[name] = controller.execute(
-                optimiser, schedule, date
+                optimiser, schedule, execution_date
             )
 
-            metric_values = evaluate_iteration(executed_schedule, forecasts, test, date)
-            records.append({"date": date, "forecaster": name, **metric_values})
+            metric_values = evaluate_iteration(
+                executed_schedule, forecasts, test, execution_date
+            )
+            records.append(
+                {"date": execution_date, "forecaster": name, **metric_values}
+            )
 
         # todo: add option to save metrics to csv
         # todo: add option to persist forecasts and schedules to csv
@@ -85,44 +87,16 @@ def evaluate_iteration(
 
 
 def init_splitter(
-    all_data: pd.DataFrame,
-    backtest_config: BacktestingConfig,
-    control_config: ControlConfig,
-) -> tuple[pd.DataFrame, ExpandingWindowSplitter]:
+    backtest_config: BacktestingConfig, control_config: ControlConfig
+) -> DateBasedExpandingWindowSplitter:
 
-    sliced_data = slice_dataframe(
-        all_data, backtest_config.fit_start, backtest_config.end
+    initial_train = pd.Timestamp(backtest_config.opt_start) - pd.Timestamp(
+        backtest_config.fit_start
     )
-    params = get_split_params_from_config(sliced_data, backtest_config, control_config)
 
-    return sliced_data, ExpandingWindowSplitter(**params)
-
-
-def get_split_params_from_config(
-    data: pd.DataFrame,
-    backtest_config: BacktestingConfig,
-    control_config: ControlConfig,
-) -> dict:
-    """
-    Generates the parameters for the ExpandingWindowSplitter based on the BacktestingConfig.
-    These parameters determine the behaviour of the model predictive control (MPC) backtesting process,
-    including the forecast horizon, initial training window, and step length.
-    """
-
-    initial_train = slice_dataframe(
-        data, backtest_config.fit_start, backtest_config.opt_start
+    return DateBasedExpandingWindowSplitter(
+        initial_train_days=initial_train.days,
+        forecast_horizon_days=control_config.forecast_horizon_days,
+        step_length_days=control_config.step_length_days,
+        timezone=backtest_config.timezone,
     )
-    half_day = 12 * backtest_config.resolution.steps_per_hour
-    initial_window = len(initial_train) + half_day
-    return {
-        "fh": range(
-            1,
-            control_config.forecast_horizon_days
-            * backtest_config.resolution.steps_per_day
-            + half_day
-            + 1,
-        ),
-        "initial_window": initial_window,
-        "step_length": control_config.step_length_days
-        * backtest_config.resolution.steps_per_day,
-    }
