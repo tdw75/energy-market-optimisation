@@ -35,7 +35,8 @@ def get_data_from_smard(
     resolution: Resolution,
     is_save: bool = True,
 ) -> pd.DataFrame:
-    index_url = f"https://www.smard.de/app/chart_data/{dataset.filter}/DE/index_{resolution}.json"
+    """Fetches data from the SMARD API for a given dataset and resolution."""
+    index_url = f"https://www.smard.de/app/chart_data/{dataset.filter}/DE/index_{resolution.value}.json"
     index_data = requests.get(index_url).json()
 
     start = (
@@ -47,7 +48,7 @@ def get_data_from_smard(
     for ts in tqdm(timestamps, desc=f"Timestamp for {dataset.name}", leave=True):
         data_url = (
             f"https://www.smard.de/app/chart_data/{dataset.filter}/DE/"
-            f"{dataset.filter}_DE_{resolution}_{ts}.json"
+            f"{dataset.filter}_DE_{resolution.value}_{ts}.json"
         )
 
         data = requests.get(data_url).json()
@@ -63,13 +64,13 @@ def get_data_from_smard(
     df = pd.concat(df_list, ignore_index=True)
 
     df["timestamp"] = pd.to_datetime(
-        df["timestamp"], unit="ms", utc="Europe/Berlin"
-    )  # todo: handle DST
+        df["timestamp"], unit="ms", utc=True
+    )  # todo: handle DST, maybe use UTC here and then Berlin when displaying schedules
     df = df.loc[df["timestamp"] >= start_date]
 
     if is_save:
         root = Path(__file__).resolve().parent.parent
-        data_dir = root / "resources" / "raw" / resolution
+        data_dir = root / "resources" / "raw" / resolution.value
         data_dir.mkdir(parents=True, exist_ok=True)
         df.to_csv(data_dir / f"{dataset.name}.csv", index=False)
 
@@ -78,7 +79,7 @@ def get_data_from_smard(
 
 def read_raw_data(names: list[str], resolution: Resolution) -> dict[str, pd.DataFrame]:
     root = Path(__file__).resolve().parent.parent.parent
-    data_dir = root / "resources" / "raw" / resolution
+    data_dir = root / "resources" / "raw" / resolution.value
     data_dict = {}
     for name in names:
         data_dict[name] = pd.read_csv(

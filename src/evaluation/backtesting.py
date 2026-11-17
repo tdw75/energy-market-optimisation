@@ -39,6 +39,7 @@ def run_backtest(
         desc=f"Backtesting {optimiser_name} with forecasters {forecaster_names} using controller {controller_name}",
         leave=True,
     ):
+        # todo: this proceeds by a fixed number of steps, using calendar days would be more robust to DST changes, but would require a more complex implementation of the ExpandingWindowSplitter
 
         train = data.iloc[split[0]]
         test = data.iloc[split[1]]
@@ -46,7 +47,7 @@ def run_backtest(
 
         for name in forecaster_names:
 
-            forecaster = get_forecaster_by_name(name)
+            forecaster = get_forecaster_by_name(name, config.resolution)
             optimiser = get_optimiser_by_name(
                 optimiser_name, config.resolution, current_state=states[name]
             )
@@ -86,8 +87,6 @@ def init_splitter(
     backtest_config: BacktestingConfig,
     control_config: ControlConfig,
 ) -> tuple[pd.DataFrame, ExpandingWindowSplitter]:
-
-    # todo: this is actually part of the control logic, should maybe move to MPC module
 
     sliced_data = slice_dataframe(
         all_data, backtest_config.fit_start, backtest_config.end
