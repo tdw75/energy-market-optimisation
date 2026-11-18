@@ -9,23 +9,26 @@ Let
 - $p_t \in \mathbb{R}$ denote the price of electricity (in MWh) at time $t \in T$
 - $B \in \mathbb{R}^{>0}$ denotes the battery capacity (in MWh)
 - $P^{max} \in \mathbb{R}^{>0}$ denote the maximum (dis)charging power (in MW)
+- $\eta_c \in (0,1]$ denote the charging efficiency of the battery
+- $\eta_d \in (0,1]$ denote the discharging efficiency of the battery
 - $s_0 \in \mathbb{R}^{\ge 0}$ denote the initial state of charge (in MWh)
 
 ### Variables 
 Let
-- $d_t \in \mathbb{R}^{\ge 0}$ denote the energy discharged (in mWh) during hour $t$ 
-- $c_t \in \mathbb{R}^{\ge 0}$ denote the energy charged (in mWh) during hour $t$ 
+- $d_t \in \mathbb{R}^{\ge 0}$ denote the energy discharged from the battery (in mWh) during hour $t$ 
+- $c_t \in \mathbb{R}^{\ge 0}$ denote the energy charged to the battery (in mWh) during hour $t$ 
 - $s_t \in \mathbb{R}^{\ge 0}$ denote the state of charge (in mWh) for the battery at time $t$, where $s_0$ is given
 
 ### Objective Function
 
-$$\min \sum_{t \in T_d} p_t(d_t-c_t)$$
+$$\min \sum_{t \in T_d} p_t(\eta_d \cdot 
+d_t-c_t)$$
 
 ### Constraints
 
 ##### 1: Define state of charge for each device at each time point using the Markov property
 
-$$ s_t = s_{t-1} + c_t - d_t\ \  \forall t \in T$$
+$$ s_t = s_{t-1} + \eta_c \cdot c_t - d_t \ \  \forall t \in T$$
 
 ##### 2: Do not let state of charge exceed battery capacity
 
@@ -41,6 +44,5 @@ $$s_{|T|} + c_{|T|} + d_{|T|} = s_0$$
 
 
 Add later
-- charging and discharging efficiency
 - battery degradation
 - add some terminal storage condition (maybe valued by the present value of the energy and adding to obj. fn.)
