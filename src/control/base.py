@@ -57,5 +57,5 @@ class Controller:
     def _get_horizon(
         data: pd.Series | pd.DataFrame, start: pd.Timestamp, offset_days: int
     ) -> np.ndarray:
-        end = start + pd.Timedelta(days=offset_days)
+        end = start + pd.DateOffset(days=offset_days)
         return (data.index >= start) & (data.index < end)
