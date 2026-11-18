@@ -19,8 +19,8 @@ def def_constr_state_of_charge(
 
         if idx == 0 or idx == T:
             constr = solver.Constraint(
-                request.starting_state,
-                request.starting_state,
+                request.current_state,
+                request.current_state,
                 get_constr_name("state_of_charge", t),
             )
 
