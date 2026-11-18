@@ -13,14 +13,20 @@ def def_constr_state_of_charge(
     device's previous state of charge and current charging decision
     """
 
+    T = len(request.timesteps) - 1
+
     for idx, t in enumerate(request.timesteps):
 
-        if idx == 0:
+        if idx == 0 or idx == T:
             constr = solver.Constraint(
-                request.current_state,
-                request.current_state,
+                request.starting_state,
+                request.starting_state,
                 get_constr_name("state_of_charge", t),
             )
+
+            # enforces the initial state of charge to be equal to the starting state
+            # enforces the terminal state of charge to be equal to the starting state
+            # todo: investigate other approaches for the terminal state, e.g. some sort of present value of future prices
         else:
             t_prev = request.timesteps[idx - 1]
             constr = solver.Constraint(0, 0, get_constr_name("state_of_charge", t))

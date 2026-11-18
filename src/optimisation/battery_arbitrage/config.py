@@ -8,7 +8,7 @@ from src.data.raw import Resolution
 @dataclass
 class BatteryArbitrageRequest:
     timesteps: list[pd.Timestamp]
-    current_state: float
+    starting_state: float
     prices: dict[pd.Timestamp, float]
     battery_capacity: float
     max_power: float
