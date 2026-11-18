@@ -27,10 +27,10 @@ class ForecastingModel(ABC):
         raise NotImplementedError("Train method not implemented.")
 
     @abstractmethod
-    def predict(self, data: pd.DataFrame):
+    def predict(self, data: pd.DataFrame) -> pd.Series:
         raise NotImplementedError("Predict method not implemented.")
 
-    def fit_predict(self, train: pd.DataFrame, test: pd.DataFrame = None):
+    def fit_predict(self, train: pd.DataFrame, test: pd.DataFrame = None) -> pd.Series:
         if test is None:
             test = train
         self.fit(train)

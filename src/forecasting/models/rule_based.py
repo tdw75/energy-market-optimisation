@@ -36,7 +36,7 @@ class NaiveForecaster(ForecastingModel):
         freq = pd.infer_freq(data.index)
         self.estimator.fit(data[self.variables.y].asfreq(freq))
 
-    def predict(self, data: pd.DataFrame):
+    def predict(self, data: pd.DataFrame) -> pd.Series:
         horizon = len(data)
         return self.estimator.predict(fh=range(1, horizon + 1))
 
