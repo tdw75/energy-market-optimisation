@@ -15,20 +15,20 @@ Let
 
 ### Variables 
 Let
-- $d_t \in \mathbb{R}^{\ge 0}$ denote the energy discharged (in mWh) during hour $t$ 
-- $c_t \in \mathbb{R}^{\ge 0}$ denote the energy charged (in mWh) during hour $t$ 
+- $d_t \in \mathbb{R}^{\ge 0}$ denote the energy discharged from the battery (in mWh) during hour $t$ 
+- $c_t \in \mathbb{R}^{\ge 0}$ denote the energy charged to the battery (in mWh) during hour $t$ 
 - $s_t \in \mathbb{R}^{\ge 0}$ denote the state of charge (in mWh) for the battery at time $t$, where $s_0$ is given
 
 ### Objective Function
 
-$$\min \sum_{t \in T_d} p_t(d_t-c_t)$$
+$$\min \sum_{t \in T_d} p_t(\eta_d \cdot 
+d_t-c_t)$$
 
 ### Constraints
 
 ##### 1: Define state of charge for each device at each time point using the Markov property
 
-$$ s_t = s_{t-1} + \eta_c \cdot c_t - \frac{d_t}{\eta_d} \ \  \forall t \in T$$
-note: defined w.r.t. the grid-side state of charge, i.e. the energy the battery contributes to the grid after accounting for charging and discharging efficiency
+$$ s_t = s_{t-1} + \eta_c \cdot c_t - d_t \ \  \forall t \in T$$
 
 ##### 2: Do not let state of charge exceed battery capacity
 

@@ -1,33 +1,37 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from ortools.linear_solver.pywraplp import Solver
-
 import pandas as pd
+from ortools.linear_solver import pywraplp
 
 from src.data.raw import Resolution
 
 
 class BaseORToolsLP(ABC):
+    """Base class for OR-Tools linear programming models."""
+
     def __init__(self, config, current_state: Any, resolution: Resolution):
         self.config = config
         self.current_state = current_state
         self.resolution = resolution
+        self.solver = pywraplp.Solver.CreateSolver(
+            "GLOP"
+        )  # todo: make solver type configurable
 
     @abstractmethod
     def solve(self, forecast: pd.Series) -> Any:
         raise NotImplementedError
 
     @abstractmethod
-    def define_objective_function(self, solver: Solver, variables, request) -> Solver:
+    def define_objective_function(self, variables, request):
         raise NotImplementedError
 
     @abstractmethod
-    def define_constraints(self, solver: Solver, variables, request) -> Solver:
+    def define_constraints(self, variables, request):
         raise NotImplementedError
 
     @abstractmethod
-    def init_variables(self, solver: Solver, request) -> tuple[Solver, "Variables"]:
+    def init_variables(self, request) -> "Variables":
         raise NotImplementedError
 
     @abstractmethod

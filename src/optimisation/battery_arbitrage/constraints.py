@@ -27,8 +27,7 @@ def def_constr_state_of_charge(
             constr.SetCoefficient(variables.state[t_prev], -1)
         constr.SetCoefficient(variables.state[t], 1)
         constr.SetCoefficient(variables.charge[t], -1 * request.charging_efficiency)
-        constr.SetCoefficient(variables.discharge[t], 1 / request.discharging_efficiency)
-        # todo: unit test that charging and discharging efficiency are correctly applied to the state of charge constraint
+        constr.SetCoefficient(variables.discharge[t], 1)
 
     return solver
 
