@@ -2,10 +2,11 @@ import pandas as pd
 from ortools.linear_solver import pywraplp
 from ortools.linear_solver.pywraplp import Solver
 
+from src.data.raw import Resolution
 from src.optimisation.base import BaseORToolsLP
 from src.optimisation.battery_arbitrage.config import (
     BatteryArbitrageRequest,
-    BatteryArbitrageConfig,
+    BatteryConfig,
 )
 from src.optimisation.battery_arbitrage.constraints import (
     def_constr_state_of_charge,
@@ -16,9 +17,9 @@ from src.optimisation.battery_arbitrage.variables import Variables, init_variabl
 
 
 class BatteryArbitrageLP(BaseORToolsLP):
-    def __init__(self, config: BatteryArbitrageConfig, current_state: float):
-        super().__init__(config, current_state)
-        self.delta_t = self.config.resolution.hours
+    def __init__(self, config: BatteryConfig, current_state: float, resolution: Resolution):
+        super().__init__(config, current_state, resolution)
+        self.delta_t = self.resolution.hours
 
     def solve(self, forecast: pd.Series) -> pd.DataFrame:
 
@@ -82,6 +83,8 @@ class BatteryArbitrageLP(BaseORToolsLP):
             "battery_capacity": self.config.battery_capacity,
             "max_power": self.config.max_power,
             "current_state": self.current_state,
+            "charging_efficiency": self.config.charging_efficiency,
+            "discharging_efficiency": self.config.discharging_efficiency,
         }
 
         return BatteryArbitrageRequest(**request)

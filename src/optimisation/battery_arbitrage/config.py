@@ -12,10 +12,13 @@ class BatteryArbitrageRequest:
     prices: dict[pd.Timestamp, float]
     battery_capacity: float
     max_power: float
+    charging_efficiency: float
+    discharging_efficiency: float
 
 
 @dataclass
-class BatteryArbitrageConfig:
+class BatteryConfig:
     battery_capacity: float
     max_power: float
-    resolution: Resolution
+    charging_efficiency: float
+    discharging_efficiency: float

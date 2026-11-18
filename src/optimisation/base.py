@@ -5,11 +5,14 @@ from ortools.linear_solver.pywraplp import Solver
 
 import pandas as pd
 
+from src.data.raw import Resolution
+
 
 class BaseORToolsLP(ABC):
-    def __init__(self, config, current_state: Any):
+    def __init__(self, config, current_state: Any, resolution: Resolution):
         self.config = config
         self.current_state = current_state
+        self.resolution = resolution
 
     @abstractmethod
     def solve(self, forecast: pd.Series) -> Any:

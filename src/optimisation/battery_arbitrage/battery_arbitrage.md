@@ -9,6 +9,8 @@ Let
 - $p_t \in \mathbb{R}$ denote the price of electricity (in MWh) at time $t \in T$
 - $B \in \mathbb{R}^{>0}$ denotes the battery capacity (in MWh)
 - $P^{max} \in \mathbb{R}^{>0}$ denote the maximum (dis)charging power (in MW)
+- $\eta_c \in (0,1]$ denote the charging efficiency of the battery
+- $\eta_d \in (0,1]$ denote the discharging efficiency of the battery
 - $s_0 \in \mathbb{R}^{\ge 0}$ denote the initial state of charge (in MWh)
 
 ### Variables 
@@ -25,7 +27,8 @@ $$\min \sum_{t \in T_d} p_t(d_t-c_t)$$
 
 ##### 1: Define state of charge for each device at each time point using the Markov property
 
-$$ s_t = s_{t-1} + c_t - d_t\ \  \forall t \in T$$
+$$ s_t = s_{t-1} + \eta_c \cdot c_t - \frac{d_t}{\eta_d} \ \  \forall t \in T$$
+note: defined w.r.t. the grid-side state of charge, i.e. the energy the battery contributes to the grid after accounting for charging and discharging efficiency
 
 ##### 2: Do not let state of charge exceed battery capacity
 
@@ -41,6 +44,5 @@ $$s_{|T|} + c_{|T|} + d_{|T|} = s_0$$
 
 
 Add later
-- charging and discharging efficiency
 - battery degradation
 - add some terminal storage condition (maybe valued by the present value of the energy and adding to obj. fn.)
