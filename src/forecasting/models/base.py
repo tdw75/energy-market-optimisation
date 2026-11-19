@@ -34,4 +34,19 @@ class ForecastingModel(ABC):
         if test is None:
             test = train
         self.fit(train)
-        return self.predict(test)
+        preds = self.predict(test)
+        return self.validate_predictions(preds, test)
+
+    def validate_predictions(self, preds: pd.Series, data: pd.DataFrame) -> pd.Series:
+
+        if not isinstance(preds, pd.Series):
+            raise TypeError("Predictions must be a pandas Series.")
+
+        if not preds.index.equals(data.index):
+            raise ValueError("Prediction index must match input index.")
+
+        if preds.isna().any():
+            raise ValueError("Predictions contain missing values.")
+
+        preds.name = self.variables.y
+        return preds
