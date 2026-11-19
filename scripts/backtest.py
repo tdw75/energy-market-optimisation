@@ -19,7 +19,7 @@ if __name__ == "__main__":
         sliced_data,
         ["naive_weekly", "naive_daily", "perfect"],
         "battery_arbitrage_lp",
-        "mpc_week_ahead",
+        "simple",
         config,
     )
     print(
@@ -30,5 +30,5 @@ if __name__ == "__main__":
                 "pnl_forecast": "sum",
                 "pnl_realised": "sum",
             }
-        )
+        ).round(3)
     )

@@ -5,11 +5,11 @@ from tqdm import tqdm
 
 from src.control.base import ControlConfig
 from src.control.registry import get_controller_by_name
-from src.data.raw import slice_dataframe, Resolution
-from src.evaluation.accuracy import evaluate_forecast_accuracy
+from src.data.raw import Resolution
+from src.evaluation.metrics.forecasting import evaluate_forecast_accuracy
 from src.evaluation.splitter import DateBasedExpandingWindowSplitter, offset_split
 from src.forecasting.registry import get_forecaster_by_name
-from src.optimisation.battery_arbitrage.evaluation import evaluate_pnl
+from src.evaluation.metrics.pnl import evaluate_pnl
 from src.optimisation.registry import get_optimiser_by_name
 
 
@@ -33,6 +33,7 @@ def run_backtest(
     states = {n: None for n in forecaster_names}
 
     controller = get_controller_by_name(controller_name)
+    # todo: add option to pass controller kwargs
     splitter = init_splitter(config, controller.config)
 
     for train_idx, test_idx in tqdm(
@@ -48,9 +49,10 @@ def run_backtest(
         for name in forecaster_names:
 
             forecaster = get_forecaster_by_name(name, config.resolution)
+            # todo: add option to pass forecaster kwargs
             optimiser = get_optimiser_by_name(
                 optimiser_name, config.resolution, current_state=states[name]
-            )
+            )  # todo: add option to pass optimiser kwargs
             forecasts, schedule, optimiser = controller.plan(
                 forecaster, optimiser, train, test, execution_date
             )
