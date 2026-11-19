@@ -6,10 +6,10 @@ from tqdm import tqdm
 from src.control.base import ControlConfig
 from src.control.registry import get_controller_by_name
 from src.data.raw import Resolution
-from src.evaluation.forecasting import evaluate_forecast_accuracy
+from src.evaluation.metrics.forecasting import evaluate_forecast_accuracy
 from src.evaluation.splitter import DateBasedExpandingWindowSplitter, offset_split
 from src.forecasting.registry import get_forecaster_by_name
-from src.evaluation.pnl import evaluate_pnl
+from src.evaluation.metrics.pnl import evaluate_pnl
 from src.optimisation.registry import get_optimiser_by_name
 
 
