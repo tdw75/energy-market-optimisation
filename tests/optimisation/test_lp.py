@@ -26,7 +26,10 @@ class TestBatteryArbitrageLP:
         price = -100.0
         forecast = pd.Series([price], index=pd.DatetimeIndex([self.ts]))
         optimiser = BatteryArbitrageLP(
-            config=self.config, current_state=0.0, resolution=resolution
+            config=self.config,
+            current_state=0.0,
+            resolution=resolution,
+            constrain_terminal_soc=False,
         )
         schedule = optimiser.solve(forecast)
 
@@ -50,7 +53,10 @@ class TestBatteryArbitrageLP:
         price = -100.0
         forecast = pd.Series([price], index=pd.DatetimeIndex([self.ts]))
         optimiser = BatteryArbitrageLP(
-            config=self.config, current_state=0.0, resolution=Resolution.HOURLY
+            config=self.config,
+            current_state=0.0,
+            resolution=Resolution.HOURLY,
+            constrain_terminal_soc=False,
         )
         schedule = optimiser.solve(forecast)
 
@@ -71,7 +77,10 @@ class TestBatteryArbitrageLP:
         price = 100.0
         forecast = pd.Series([price], index=pd.DatetimeIndex([self.ts]))
         optimiser = BatteryArbitrageLP(
-            config=self.config, current_state=5.0, resolution=Resolution.QUARTER_HOURLY
+            config=self.config,
+            current_state=5.0,
+            resolution=Resolution.QUARTER_HOURLY,
+            constrain_terminal_soc=False,
         )
         schedule = optimiser.solve(forecast)
 

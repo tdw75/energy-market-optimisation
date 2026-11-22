@@ -19,10 +19,16 @@ from src.optimisation.battery_arbitrage.variables import Variables, init_variabl
 
 class BatteryArbitrageLP(BaseORToolsLP):
     def __init__(
-        self, config: BatteryConfig, current_state: float, resolution: Resolution
+        self,
+        config: BatteryConfig,
+        current_state: float,
+        resolution: Resolution,
+        constrain_terminal_soc: bool = True,
     ):
         super().__init__(config, current_state, resolution)
         self.delta_t = self.resolution.hours
+        self.constrain_terminal_soc = constrain_terminal_soc
+        # todo: added for testing purposes, remove later or make configurable
 
     def solve(self, forecast: pd.Series) -> pd.DataFrame:
 
@@ -67,7 +73,10 @@ class BatteryArbitrageLP(BaseORToolsLP):
         self.solver = def_constr_max_charging_power(
             self.solver, variables, request, self.delta_t
         )
-        self.solver = def_constr_terminal_state_of_charge(self.solver, variables, request)
+        if self.constrain_terminal_soc:
+            self.solver = def_constr_terminal_state_of_charge(
+                self.solver, variables, request
+            )
 
     def get_schedule_from_solution(
         self, variables: Variables, request: BatteryArbitrageRequest
@@ -75,7 +84,10 @@ class BatteryArbitrageLP(BaseORToolsLP):
         ts = request.timesteps
         schedule = pd.DataFrame(index=ts)
         schedule["buy"] = [variables.charge[t].solution_value() for t in ts]
-        schedule["sell"] = [variables.discharge[t].solution_value() * request.discharging_efficiency for t in ts]
+        schedule["sell"] = [
+            variables.discharge[t].solution_value() * request.discharging_efficiency
+            for t in ts
+        ]
         schedule["state"] = [variables.state[t].solution_value() for t in ts]
         return schedule
 
