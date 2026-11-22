@@ -18,7 +18,7 @@ def min_max_hour_deviation(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     min_idx_pred = np.argmin(y_pred)
     max_idx_pred = np.argmax(y_pred)
 
-    return abs(min_idx_pred - min_idx_true) + abs(max_idx_pred - max_idx_true)
+    return float(abs(min_idx_pred - min_idx_true) + abs(max_idx_pred - max_idx_true))
 
 
 

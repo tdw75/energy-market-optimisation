@@ -56,10 +56,10 @@ def run_backtest(
             optimiser, schedule, execution_date
         )
 
-        results.store_prices(forecasts, test)
-        results.store_schedule(schedule)
-        results.store_state(state, execution_date)
-        results.evaluate_iteration(schedule, forecasts, test, execution_date)
+        results.store_iteration(forecasts, test, executed_schedule, state, execution_date)
+        results.evaluate_iteration(executed_schedule, forecasts, test, execution_date)
+
+    results.validate_final()
 
     return results
 
