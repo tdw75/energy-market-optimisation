@@ -55,14 +55,22 @@ class BacktestResults:
         self.state.loc[date] = state
 
     def evaluate_iteration(
-        self, schedule: pd.DataFrame, pred: pd.Series, actual: pd.DataFrame, date
+        self,
+        executed_schedule: pd.DataFrame,
+        pred: pd.Series,
+        actual: pd.DataFrame,
+        date,
     ):
-        forecast_metrics = evaluate_forecast_accuracy(actual, pred)
+        # note: forecast metrics are evaluated on the entire test set, not just the executed schedule
+        forecast_metrics = evaluate_forecast_accuracy(actual["price"], pred)
+
+        # note: pnl metrics are evaluated only on the executed schedule, which is a subset of the test set
         pnl_metrics = evaluate_pnl(
-            schedule,
-            actual.reindex(schedule.index),
-            pred.reindex(schedule.index),
+            executed_schedule,
+            actual.reindex(executed_schedule.index),
+            pred.reindex(executed_schedule.index),
         )
+
         metrics = {**forecast_metrics, **pnl_metrics.sum().to_dict()}
         row = pd.DataFrame(metrics, index=[date])
         self.metrics = pd.concat([self.metrics, row], axis=0)
