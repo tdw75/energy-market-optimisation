@@ -1,8 +1,7 @@
-import numpy as np
 import pandas as pd
 import pytest
 
-from src.evaluation.splitter import (
+from src.evaluation.backtesting.splitter import (
     DateBasedExpandingWindowSplitter,
     clip_to_local_midnight,
 )

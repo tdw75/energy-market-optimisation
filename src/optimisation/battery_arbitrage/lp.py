@@ -1,6 +1,6 @@
 import pandas as pd
+import pandera.pandas as pa
 from ortools.linear_solver import pywraplp
-from ortools.linear_solver.pywraplp import Solver
 
 from src.data.raw import Resolution
 from src.optimisation.base import BaseORToolsLP
@@ -15,6 +15,7 @@ from src.optimisation.battery_arbitrage.constraints import (
     def_constr_terminal_state_of_charge,
 )
 from src.optimisation.battery_arbitrage.variables import Variables, init_variables
+from src.utils import get_datetime_index_schema_checks
 
 
 class BatteryArbitrageLP(BaseORToolsLP):
@@ -73,10 +74,9 @@ class BatteryArbitrageLP(BaseORToolsLP):
         self.solver = def_constr_max_charging_power(
             self.solver, variables, request, self.delta_t
         )
-        if self.constrain_terminal_soc:
-            self.solver = def_constr_terminal_state_of_charge(
-                self.solver, variables, request
-            )
+        if self.constrain_terminal_soc:self.solver = def_constr_terminal_state_of_charge(
+            self.solver, variables, request
+        )
 
     def get_schedule_from_solution(
         self, variables: Variables, request: BatteryArbitrageRequest
@@ -89,7 +89,7 @@ class BatteryArbitrageLP(BaseORToolsLP):
             for t in ts
         ]
         schedule["state"] = [variables.state[t].solution_value() for t in ts]
-        return schedule
+        return schedule_schema(self.config).validate(schedule)
 
     def construct_request(self, forecast: pd.Series) -> BatteryArbitrageRequest:
         request = {
@@ -106,3 +106,26 @@ class BatteryArbitrageLP(BaseORToolsLP):
 
     def update_state(self, schedule: pd.DataFrame) -> pd.DataFrame:
         return schedule["state"].iloc[-1]
+
+
+def schedule_schema(config: BatteryConfig) -> pd.DataFrameSchema:
+    return pa.DataFrameSchema(
+        {
+            "buy": pa.Column(
+                float,
+                checks=[pa.Check.ge(0), pa.Check.le(config.max_power)],
+                nullable=False,
+            ),
+            "sell": pa.Column(
+                float,
+                checks=[pa.Check.ge(0), pa.Check.le(config.max_power)],
+                nullable=False,
+            ),
+            "state": pa.Column(
+                float,
+                checks=[pa.Check.ge(0), pa.Check.le(config.battery_capacity)],
+                nullable=False,
+            ),
+        },
+        checks=get_datetime_index_schema_checks(),
+    )

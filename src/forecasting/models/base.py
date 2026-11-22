@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import pandas as pd
+import pandera as pa
+
+from src.utils import get_datetime_index_schema_checks
+
 
 # todo: add better way to store and pass params than dictionary, e.g. dataclass or pydantic model
 
@@ -39,14 +43,17 @@ class ForecastingModel(ABC):
 
     def validate_predictions(self, preds: pd.Series, data: pd.DataFrame) -> pd.Series:
 
-        if not isinstance(preds, pd.Series):
-            raise TypeError("Predictions must be a pandas Series.")
+        preds = self.schema.validate(preds)
 
         if not preds.index.equals(data.index):
-            raise ValueError("Prediction index must match input index.")
-
-        if preds.isna().any():
-            raise ValueError("Predictions contain missing values.")
-
-        preds.name = self.variables.y
+            raise ValueError("Forecast index does not match input index.")
         return preds
+
+    @property
+    def schema(self) -> pa.SeriesSchema:
+        return pa.SeriesSchema(
+            float,
+            nullable=False,
+            name=self.variables.y,
+            checks=get_datetime_index_schema_checks(),
+        )

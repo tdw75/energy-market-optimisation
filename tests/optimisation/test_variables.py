@@ -24,7 +24,7 @@ def test_init_variables():
     for var_type in ["state", "charge", "discharge"]:
         var_names.extend([f"{var_type}-{ts}" for ts in ts_strings])
 
-    assert [v.name() for v in optimiser.solver.variables()] == var_names
+    assert [v.forecaster_name() for v in optimiser.solver.variables()] == var_names
     assert [variables.state[t] for t in request.timesteps] == [
         optimiser.solver.variable(i) for i in range(3)
     ]

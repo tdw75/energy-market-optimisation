@@ -33,7 +33,7 @@ class TestBatteryArbitrageLP:
         )
         schedule = optimiser.solve(forecast)
 
-        assert [v.name() for v in optimiser.solver.variables()] == self.var_names
+        assert [v.forecaster_name() for v in optimiser.solver.variables()] == self.var_names
         assert optimiser.solver.variable(0).solution_value() == pytest.approx(value)
         assert optimiser.solver.variable(1).solution_value() == pytest.approx(value)
         assert optimiser.solver.variable(2).solution_value() == pytest.approx(0.0)
@@ -60,7 +60,7 @@ class TestBatteryArbitrageLP:
         )
         schedule = optimiser.solve(forecast)
 
-        assert [v.name() for v in optimiser.solver.variables()] == self.var_names
+        assert [v.forecaster_name() for v in optimiser.solver.variables()] == self.var_names
         assert optimiser.solver.variable(0).solution_value() == pytest.approx(state_exp)
         assert optimiser.solver.variable(1).solution_value() == pytest.approx(5.0)
         assert optimiser.solver.variable(2).solution_value() == pytest.approx(0.0)
@@ -84,7 +84,7 @@ class TestBatteryArbitrageLP:
         )
         schedule = optimiser.solve(forecast)
 
-        assert [v.name() for v in optimiser.solver.variables()] == self.var_names
+        assert [v.forecaster_name() for v in optimiser.solver.variables()] == self.var_names
         assert optimiser.solver.variable(0).solution_value() == pytest.approx(3.75)
         assert optimiser.solver.variable(1).solution_value() == pytest.approx(0.0)
         assert optimiser.solver.variable(2).solution_value() == pytest.approx(1.25)
