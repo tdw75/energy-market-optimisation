@@ -74,9 +74,10 @@ class BatteryArbitrageLP(BaseORToolsLP):
         self.solver = def_constr_max_charging_power(
             self.solver, variables, request, self.delta_t
         )
-        if self.constrain_terminal_soc:self.solver = def_constr_terminal_state_of_charge(
-            self.solver, variables, request
-        )
+        if self.constrain_terminal_soc:
+            self.solver = def_constr_terminal_state_of_charge(
+                self.solver, variables, request
+            )
 
     def get_schedule_from_solution(
         self, variables: Variables, request: BatteryArbitrageRequest
