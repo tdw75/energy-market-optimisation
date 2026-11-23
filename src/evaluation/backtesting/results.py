@@ -17,7 +17,7 @@ from src.utils import get_datetime_index_schema_checks
 
 @dataclass
 class BacktestResults:
-    config: BacktestingConfig
+    metadata: BacktestingConfig
     battery: BatteryConfig
 
     price: pd.DataFrame
@@ -81,21 +81,23 @@ class BacktestResults:
         self.state = state_schema().validate(self.state)
         self.metrics = metrics_schema().validate(self.metrics)
 
-    def save_to_file(self, directory: str):
+    def save_to_file(self, directory: str | Path):
 
         self.validate_final()
 
-        directory_path = Path(directory) / self.config.run_id
-        directory_path.parent.mkdir(parents=True, exist_ok=True)
+        directory_path = (
+            Path(directory) / self.metadata.backtest_id / self.metadata.run_id
+        )
+        directory_path.mkdir(parents=True, exist_ok=True)
 
-        with open(f"{directory_path}/config.txt", "w") as f:
-            json.dump(self.config.__dict__, f, indent=4)
-        with open(f"{directory_path}/battery.txt", "w") as f:
+        with open(directory_path / "config.json", "w") as f:
+            json.dump(self.metadata.to_dict(), f, indent=4)
+        with open(directory_path / "battery.json", "w") as f:
             json.dump(self.battery.__dict__, f, indent=4)
-        self.price.to_csv(f"{directory_path}/prices.csv")
-        self.schedule.to_csv(f"{directory_path}/schedule.csv")
-        self.state.to_csv(f"{directory_path}/state.csv")
-        self.metrics.to_csv(f"{directory_path}/metrics.csv")
+        self.price.to_csv(directory_path / "prices.csv")
+        self.schedule.to_csv(directory_path / "schedule.csv")
+        self.state.to_csv(directory_path / "state.csv")
+        self.metrics.to_csv(directory_path / "metrics.csv")
 
 
 def price_schema() -> pa.DataFrameSchema:

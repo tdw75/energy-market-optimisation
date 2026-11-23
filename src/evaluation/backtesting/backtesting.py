@@ -19,7 +19,7 @@ def run_backtest(
 ) -> BacktestResults:
     state = None
     results = BacktestResults(
-        config=config,
+        metadata=config,
         battery=battery,  # todo: add battery config to backtesting config
         price=pd.DataFrame(),
         schedule=pd.DataFrame(),
@@ -56,7 +56,9 @@ def run_backtest(
             optimiser, schedule, execution_date
         )
 
-        results.store_iteration(forecasts, test, executed_schedule, state, execution_date)
+        results.store_iteration(
+            forecasts, test, executed_schedule, state, execution_date
+        )
         results.evaluate_iteration(executed_schedule, forecasts, test, execution_date)
 
     results.validate_final()
