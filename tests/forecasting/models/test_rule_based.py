@@ -1,12 +1,19 @@
 import numpy as np
 import pandas as pd
 
+from src.data.raw import Resolution
 from src.forecasting.models.base import ForecastVariables
 from src.forecasting.models.rule_based import NaiveForecaster
 
 
 class TestNaiveForecaster:
     def test_fit_predict(self):
+
+        class MockNaiveForecaster(NaiveForecaster):
+            @property
+            def lag(self):
+                return 6
+
         n = 24
         sp = 6
         train_size = 12
@@ -17,8 +24,11 @@ class TestNaiveForecaster:
         train = data.iloc[:train_size]
         test = data.iloc[train_size:]
 
-        forecaster = NaiveForecaster(
-            name="naive", variables=ForecastVariables(y="value"), params={"sp": sp}
+        forecaster = MockNaiveForecaster(
+            name="naive",
+            variables=ForecastVariables(y="value"),
+            resolution=Resolution.HOURLY,
+            params={"sp": sp},
         )
         forecaster.fit(train)
 
