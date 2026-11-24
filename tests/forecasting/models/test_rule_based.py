@@ -9,13 +9,7 @@ from src.forecasting.models.rule_based import NaiveForecaster
 class TestNaiveForecaster:
     def test_fit_predict(self):
 
-        class MockNaiveForecaster(NaiveForecaster):
-            @property
-            def lag(self):
-                return 6
-
         n = 24
-        sp = 6
         train_size = 12
         data = pd.DataFrame(
             {"value": range(0, n)}, index=pd.date_range("2023-01-01", periods=n)
@@ -24,17 +18,24 @@ class TestNaiveForecaster:
         train = data.iloc[:train_size]
         test = data.iloc[train_size:]
 
+        class MockNaiveForecaster(NaiveForecaster):
+            @property
+            def lag(self):
+                return 6
+
         forecaster = MockNaiveForecaster(
             name="naive",
             variables=ForecastVariables(y="value"),
             resolution=Resolution.HOURLY,
-            params={"sp": sp},
         )
         forecaster.fit(train)
 
         pred = forecaster.predict(test)
         values_exp = np.concatenate(
-            [train["value"].values[-sp:], train["value"].values[-sp:]]
+            [
+                train["value"].values[-forecaster.lag :],
+                train["value"].values[-forecaster.lag :],
+            ]
         )
 
         pred_exp = pd.Series(values_exp, index=test.index, dtype=float, name="value")
