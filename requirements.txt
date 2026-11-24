@@ -9,3 +9,5 @@ ortools
 pandera
 black
 pre-commit
+neuralforecast
+catboost

@@ -59,17 +59,14 @@ class BacktestResults:
         executed_schedule: pd.DataFrame,
         pred: pd.Series,
         actual: pd.DataFrame,
-        date,
+        date: pd.Timestamp,
     ):
-        # note: forecast metrics are evaluated on the entire test set, not just the executed schedule
-        forecast_metrics = evaluate_forecast_accuracy(actual["price"], pred)
 
-        # note: pnl metrics are evaluated only on the executed schedule, which is a subset of the test set
-        pnl_metrics = evaluate_pnl(
-            executed_schedule,
-            actual.reindex(executed_schedule.index),
-            pred.reindex(executed_schedule.index),
-        )
+        actual_reindexed = actual.reindex(executed_schedule.index)["price"]
+        pred_reindexed = pred.reindex(executed_schedule.index)
+
+        forecast_metrics = evaluate_forecast_accuracy(actual_reindexed, pred_reindexed)
+        pnl_metrics = evaluate_pnl(executed_schedule, actual_reindexed, pred_reindexed)
 
         metrics = {**forecast_metrics, **pnl_metrics.sum().to_dict()}
         row = pd.DataFrame(metrics, index=[date])
@@ -116,6 +113,7 @@ def metrics_schema() -> pa.DataFrameSchema:
             "mae": pa.Column(float, checks=pa.Check.ge(0), nullable=False),
             "rmse": pa.Column(float, checks=pa.Check.ge(0), nullable=False),
             "mhd": pa.Column(float, checks=pa.Check.ge(0), nullable=False),
+            "mpd": pa.Column(float, checks=pa.Check.ge(0), nullable=False),
             "pnl_forecast": pa.Column(float, nullable=False),
             "pnl_realised": pa.Column(float, nullable=False),
         },
