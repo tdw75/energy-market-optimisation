@@ -124,3 +124,7 @@ class Resolution(Enum):
     @property
     def steps_per_week(self) -> int:
         return 7 * self.steps_per_day
+
+    @property
+    def freq(self) -> str:
+        return {Resolution.HOURLY: "h", Resolution.QUARTER_HOURLY: "15min"}[self]

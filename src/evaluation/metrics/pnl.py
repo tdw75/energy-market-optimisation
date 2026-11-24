@@ -1,7 +1,9 @@
 import pandas as pd
 
 
-def evaluate_pnl(schedule: pd.DataFrame, actual: pd.DataFrame, forecasts: pd.Series) -> pd.DataFrame:
+def evaluate_pnl(
+    schedule: pd.DataFrame, actual: pd.Series, forecasts: pd.Series
+) -> pd.DataFrame:
     """
     Evaluates the profit and loss (PnL) of a trading strategy based on the true and predicted values.
 
@@ -18,7 +20,7 @@ def evaluate_pnl(schedule: pd.DataFrame, actual: pd.DataFrame, forecasts: pd.Ser
         index=schedule.index,
         columns=["pnl_forecast", "pnl_realised"],
     )
-    pnl["pnl_realised"] = schedule["sell"] * actual["price"] - schedule["buy"] * actual["price"]
+    pnl["pnl_realised"] = schedule["sell"] * actual - schedule["buy"] * actual
     pnl["pnl_forecast"] = schedule["sell"] * forecasts - schedule["buy"] * forecasts
 
     return pnl

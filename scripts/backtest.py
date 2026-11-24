@@ -14,6 +14,7 @@ def summarise_results(metrics: pd.DataFrame) -> pd.DataFrame:
             "mae": "mean",
             "rmse": "mean",
             "mhd": "mean",
+            "mpd": "mean",
             "pnl_forecast": "sum",
             "pnl_realised": "sum",
         }
@@ -27,7 +28,17 @@ if __name__ == "__main__":
     # todo: move this to a config yaml or command line arguments
     directory = Path(__file__).parent.parent / "resources" / "backtests"
     run_name = "backtest"
-    forecasters = ["naive_daily", "naive_weekly", "perfect"]
+    forecasters = [
+        "sarima",
+        "catboost_manual",
+        "catboost",
+        "timestral_5m",
+        "dlinear",
+        "nlinear",
+        "naive_daily",
+        "naive_weekly",
+        "perfect",
+    ]
     optimiser_name = "battery_arbitrage_lp"
     controller_name = "mpc_week_ahead"
     battery = {
@@ -46,7 +57,7 @@ if __name__ == "__main__":
             run_idx=idx,
             fit_start="2023-01-01",
             opt_start="2026-01-01",
-            end="2026-07-01",
+            end="2026-07-02",
             resolution=Resolution.HOURLY,
             forecaster_name=forecaster_name,
             optimiser_name=optimiser_name,
